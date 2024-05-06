@@ -1,4 +1,4 @@
-package main
+package models
 
 import "time"
 
@@ -19,7 +19,7 @@ type BackendMessageObject struct {
 	CreatedTime time.Time `json:"createdTime"`
 }
 
-func newMessageObject() BackendMessageObject {
+func NewMessageObject() BackendMessageObject {
 	return BackendMessageObject{
 		FrontendMessageObject: FrontendMessageObject{
 			Type: PAYLOAD_TYPE_MESSAGE,
@@ -34,7 +34,7 @@ type ConnectedObject struct {
 	SocketId string `json:"socketId"`
 }
 
-func newConnectedObject() ConnectedObject {
+func NewConnectedObject() ConnectedObject {
 	return ConnectedObject{
 		Type: PAYLOAD_TYPE_CONNECTED,
 	}
