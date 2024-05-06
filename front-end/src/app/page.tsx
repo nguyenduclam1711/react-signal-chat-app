@@ -1,26 +1,16 @@
 "use client";
-import { io } from "socket.io-client";
 
-// make the connection through socket io
-const socket = io("localhost:3000/chat");
-
-socket.on("connect", () => {
-  console.log("Connected to chat");
-});
-
-socket.on("disconnect", (reason, details) => {
-  console.log("Disconnected from chat");
-  console.log("Reason: ", reason, "Details: ", details);
-});
-
-socket.on("connect_error", (error) => {
-  console.log("Connection error", error.message);
-});
+import { mockUserId, socket } from "@/utils/socket-connect";
 
 export default function Home() {
+  const onSendMessage = () => {
+    socket.send(`Fake message from ${mockUserId}`);
+  };
+
   return (
     <main>
       <div>Chat App</div>
+      <button onClick={onSendMessage}>Send a mock message</button>
     </main>
   );
 }
