@@ -17,5 +17,5 @@ func ConnectToDatabase() {
 	if err != nil {
 		log.Fatal("Cannot connect to database", err)
 	}
-	MongoDatabase = cl.Database("test")
+	MongoDatabase = cl.Database(env.EnvData["MONGODB_DATABASE"])
 }
