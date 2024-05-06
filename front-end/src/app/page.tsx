@@ -1,16 +1,14 @@
 "use client";
 
-import { mockUserId, socket } from "@/utils/socket-connect";
+import ChatContainer from "./components/chat-container";
+import ChatContextProvider from "./components/chat-context";
 
 export default function Home() {
-  const onSendMessage = () => {
-    socket.send(`Fake message from ${mockUserId}`);
-  };
-
   return (
     <main>
-      <div>Chat App</div>
-      <button onClick={onSendMessage}>Send a mock message</button>
+      <ChatContextProvider>
+        <ChatContainer />
+      </ChatContextProvider>
     </main>
   );
 }

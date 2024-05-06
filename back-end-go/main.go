@@ -54,7 +54,6 @@ func main() {
 		for socket, userId := range mapSocketToUserId {
 			if socket == payload.Kws.UUID {
 				currUserId = userId
-				continue
 			}
 			channels = append(channels, socket)
 		}
@@ -70,7 +69,12 @@ func main() {
 			fmt.Println("Cant parse json from user ", currUserId)
 			return
 		}
-		payload.Kws.EmitToList(channels, payload.Data, socketio.TextMessage)
+		payloadMessage, payloadMessageErr := json.Marshal(messageObj)
+		if payloadMessageErr != nil {
+			fmt.Println("Cant encode to string", messageObj)
+			return
+		}
+		payload.Kws.EmitToList(channels, payloadMessage, socketio.TextMessage)
 	})
 
 	app.Get("/ws/:id", socketio.New(func(kws *socketio.Websocket) {

@@ -1,20 +1,30 @@
 package main
 
+import "time"
+
 const (
 	PAYLOAD_TYPE_MESSAGE   = "PAYLOAD_TYPE_MESSAGE"
 	PAYLOAD_TYPE_CONNECTED = "PAYLOAD_TYPE_CONNECTED"
 )
 
-type MessageObject struct {
+type FrontendMessageObject struct {
 	Type     string `json:"type"`
 	UserId   string `json:"userId"`
 	SocketId string `json:"socketId"`
 	Data     string `json:"data"`
 }
 
-func newMessageObject() MessageObject {
-	return MessageObject{
-		Type: PAYLOAD_TYPE_MESSAGE,
+type BackendMessageObject struct {
+	FrontendMessageObject
+	CreatedTime time.Time `json:"createdTime"`
+}
+
+func newMessageObject() BackendMessageObject {
+	return BackendMessageObject{
+		FrontendMessageObject: FrontendMessageObject{
+			Type: PAYLOAD_TYPE_MESSAGE,
+		},
+		CreatedTime: time.Now(),
 	}
 }
 
