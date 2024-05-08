@@ -1,19 +1,26 @@
 package repository
 
 import (
+	"context"
 	"errors"
 	"strings"
 
 	"github.com/nguyenduclam1711/react-signal-chat-app/database"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-type CoreRepositoryInsertOne[M interface{}] func(payload M) (*mongo.InsertOneResult, error)
+type (
+	CoreRepositoryInsertOne[M interface{}] func(payload M) (*mongo.InsertOneResult, error)
+	CoreRepositoryGetOne                   func(filter *bson.D, opts *options.FindOneOptions) *mongo.SingleResult
+)
 
 type CoreRepository[InsertOnePayload interface{}] struct {
 	Coll           *mongo.Collection
 	CollectionName string
 	InsertOne      CoreRepositoryInsertOne[InsertOnePayload]
+	GetOne         CoreRepositoryGetOne
 }
 
 type CreateNewRepositoryParams[InsertOnePayload interface{}] struct {
@@ -34,6 +41,9 @@ func createNewRepository[InsertOnePayload interface{}](params CreateNewRepositor
 	}
 	result.Coll = database.MongoDatabase.Collection(collectionName)
 	result.InsertOne = params.InsertOne(result.Coll)
+	result.GetOne = func(filter *bson.D, opts *options.FindOneOptions) *mongo.SingleResult {
+		return result.Coll.FindOne(context.TODO(), filter, opts)
+	}
 
 	// the collection doesnt exist so we're gonna create one with index
 	if params.CreateInitIndexes != nil && !database.ExistCollectionNames[collectionName] {

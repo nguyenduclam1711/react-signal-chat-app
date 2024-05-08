@@ -19,17 +19,17 @@ func removeUserAndSocketFromMapping(mapUserIdToSocket, mapSocketToUserId map[str
 	delete(mapSocketToUserId, socketId)
 }
 
-func CreateChatModule(app *fiber.App) {
+func CreateChatModule(param CreateModuleParam) {
 	// save client ids
 	// map userId and socketId
 	mapUserIdToSocket := map[string]string{}
 	mapSocketToUserId := map[string]string{}
 
 	// Setup the middleware to retrieve the data sent in first GET request
-	app.Use(func(c *fiber.Ctx) error {
+	param.App.Use(func(c *fiber.Ctx) error {
 		// IsWebSocketUpgrade returns true if the client
 		// requested upgrade to the WebSocket protocol.
-		if string(c.Request().Header.Method()) == "GET" && strings.Contains(string(c.Request().URI().Path()), "/ws/") {
+		if string(c.Request().Header.Method()) == "GET" && strings.Contains(string(c.Request().URI().Path()), PathWithPrefix(param.PrefixPath, "/ws/")) {
 			if websocket.IsWebSocketUpgrade(c) {
 				c.Locals("allowed", true)
 				return c.Next()
@@ -79,7 +79,7 @@ func CreateChatModule(app *fiber.App) {
 		payload.Kws.EmitToList(channels, payloadMessage, socketio.TextMessage)
 	})
 
-	app.Get("/ws/:id", socketio.New(func(kws *socketio.Websocket) {
+	param.App.Get(PathWithPrefix(param.PrefixPath, "/ws/:id"), socketio.New(func(kws *socketio.Websocket) {
 		userId := kws.Params("id")
 		mapUserIdToSocket[userId] = kws.UUID
 		mapSocketToUserId[kws.UUID] = userId

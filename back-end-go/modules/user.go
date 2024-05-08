@@ -8,8 +8,8 @@ import (
 	"github.com/nguyenduclam1711/react-signal-chat-app/repository"
 )
 
-func CreateUserModule(app *fiber.App) {
-	app.Post("/register", func(c *fiber.Ctx) error {
+func CreateUserModule(param CreateModuleParam) {
+	param.App.Post(PathWithPrefix(param.PrefixPath, "/register"), func(c *fiber.Ctx) error {
 		requestBody := c.Body()
 
 		var registeredUserPayload models.RegisteredUserPayload

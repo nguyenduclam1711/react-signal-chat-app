@@ -16,3 +16,9 @@ type UserDatabaseStruct struct {
 	Username    string    `bson:"username"`
 	CreatedTime time.Time `bson:"createdTime"`
 }
+
+type UserParseFromDB struct {
+	Id          string    `bson:"_id"`
+	Username    string    `bson:"username"`
+	CreatedTime time.Time `bson:"createdTime"`
+}
