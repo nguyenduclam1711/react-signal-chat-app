@@ -3,6 +3,7 @@ package modules
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/gofiber/contrib/socketio"
 	"github.com/gofiber/contrib/websocket"
@@ -28,11 +29,14 @@ func CreateChatModule(app *fiber.App) {
 	app.Use(func(c *fiber.Ctx) error {
 		// IsWebSocketUpgrade returns true if the client
 		// requested upgrade to the WebSocket protocol.
-		if websocket.IsWebSocketUpgrade(c) {
-			c.Locals("allowed", true)
-			return c.Next()
+		if string(c.Request().Header.Method()) == "GET" && strings.Contains(string(c.Request().URI().Path()), "/ws/") {
+			if websocket.IsWebSocketUpgrade(c) {
+				c.Locals("allowed", true)
+				return c.Next()
+			}
+			return fiber.ErrUpgradeRequired
 		}
-		return fiber.ErrUpgradeRequired
+		return c.Next()
 	})
 
 	socketio.On(socketio.EventDisconnect, func(payload *socketio.EventPayload) {

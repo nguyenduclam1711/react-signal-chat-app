@@ -1,22 +1,42 @@
 package repository
 
 import (
-	"github.com/nguyenduclam1711/react-signal-chat-app/database"
+	"context"
+	"time"
+
+	"github.com/nguyenduclam1711/react-signal-chat-app/models"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-type UserRepositoryStruct struct {
-	Coll *mongo.Collection
-}
-
-var UserRepository UserRepositoryStruct
+var UserRepository CoreRepository[models.UserDatabaseStruct]
 
 func NewUserRepository() {
-	coll := database.MongoDatabase.Collection("user")
-	UserRepository = UserRepositoryStruct{
-		Coll: coll,
-	}
-}
-
-func (this UserRepositoryStruct) Create() {
+	collectionName := "user"
+	UserRepository = HandleCreateNewRepository[models.UserDatabaseStruct](CreateNewRepositoryParams[models.UserDatabaseStruct]{
+		CollectionName: collectionName,
+		InsertOne: func(coll *mongo.Collection) CoreRepositoryInsertOne[models.UserDatabaseStruct] {
+			return func(payload models.UserDatabaseStruct) (*mongo.InsertOneResult, error) {
+				payload.CreatedTime = time.Now()
+				return coll.InsertOne(context.TODO(), payload)
+			}
+		},
+		CreateInitIndexes: func(coll *mongo.Collection) ([]string, error) {
+			return coll.Indexes().CreateMany(
+				context.TODO(),
+				[]mongo.IndexModel{
+					{
+						Keys: bson.D{
+							{
+								Key:   "username",
+								Value: 1,
+							},
+						},
+						Options: options.Index().SetUnique(true),
+					},
+				},
+			)
+		},
+	})
 }

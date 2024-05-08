@@ -24,7 +24,8 @@ func main() {
 	// create fiber app
 	app := fiber.New()
 
-	modules.CreateChatModule(app)
+	// craete all modules
+	modules.CreateAllModules(app)
 
 	// disconnect database here, the code is ugly I know
 	defer func() {

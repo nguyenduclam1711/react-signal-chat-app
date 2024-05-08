@@ -1,5 +1,7 @@
 package models
 
+import "time"
+
 type UserCredentialFrontendPayload struct {
 	Username string `json:"username" bson:"username"`
 	Password string `json:"password" bson:"password"`
@@ -16,4 +18,10 @@ type CreatedUserCredentialResponse struct {
 
 func NewCreatedUserCredentialResponse() CreatedUserCredentialResponse {
 	return CreatedUserCredentialResponse{}
+}
+
+type UserCredentialDatabaseStruct struct {
+	Username    string    `bson:"username"`
+	Password    string    `bson:"password"`
+	CreatedTime time.Time `bson:"createdTime"`
 }
