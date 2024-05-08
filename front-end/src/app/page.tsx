@@ -1,5 +1,3 @@
-"use client";
-
 import ChatContainer from "./components/chat-container";
 import ChatContextProvider from "./components/chat-context";
 
