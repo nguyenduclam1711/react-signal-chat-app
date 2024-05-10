@@ -9,6 +9,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/nguyenduclam1711/react-signal-chat-app/env"
 	"github.com/nguyenduclam1711/react-signal-chat-app/models"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type CreateModuleParam struct {
@@ -81,6 +82,7 @@ func CreateAllModules(app *fiber.App) {
 		SigningKey: jwtware.SigningKey{
 			Key: []byte(env.EnvData["JWT_SECRET"]),
 		},
+		TokenLookup: "cookie:accessToken",
 	}))
 	// all modules below here's gonna be need bearer token
 
@@ -94,8 +96,13 @@ func PathWithPrefix(prefix string, endpoint string) string {
 func CurrentUser(c *fiber.Ctx) models.CurrentUser {
 	user := c.Locals("user").(*jwt.Token)
 	claims := user.Claims.(jwt.MapClaims)
-	return models.CurrentUser{
+	mongoId, err := primitive.ObjectIDFromHex(claims["id"].(string))
+	result := models.CurrentUser{
 		Id:       claims["id"].(string),
 		Username: claims["username"].(string),
 	}
+	if err == nil {
+		result.MongoId = mongoId
+	}
+	return result
 }

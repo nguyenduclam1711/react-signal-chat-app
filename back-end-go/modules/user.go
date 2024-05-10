@@ -10,10 +10,9 @@ import (
 func CreateUserModule(param CreateModuleParam) {
 	param.App.Get(PathWithPrefix(param.PrefixPath, "/me"), func(c *fiber.Ctx) error {
 		currentUser := CurrentUser(c)
-		// FIX: Why find by _id doesnt work but find by username work???
 		result := repository.UserRepository.GetOne(&bson.D{{
 			Key:   "_id",
-			Value: currentUser.Id,
+			Value: currentUser.MongoId,
 		}}, nil)
 
 		var userFromDb models.UserParseFromDB

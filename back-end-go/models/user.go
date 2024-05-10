@@ -1,6 +1,10 @@
 package models
 
-import "time"
+import (
+	"time"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
+)
 
 type RegisteredUserPayload struct {
 	Username string `json:"username"`
@@ -26,4 +30,5 @@ type UserParseFromDB struct {
 type CurrentUser struct {
 	Id       string
 	Username string
+	MongoId  primitive.ObjectID
 }
