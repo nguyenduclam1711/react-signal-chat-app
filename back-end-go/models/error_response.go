@@ -1,7 +1,7 @@
 package models
 
 import (
-	"encoding/json"
+	"github.com/goccy/go-json"
 	"fmt"
 
 	"github.com/gofiber/fiber/v2"

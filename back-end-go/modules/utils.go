@@ -3,8 +3,8 @@ package modules
 import (
 	"fmt"
 	"sync"
-	"time"
 
+	jwtware "github.com/gofiber/contrib/jwt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/nguyenduclam1711/react-signal-chat-app/env"
@@ -21,28 +21,15 @@ type CreateModuleConstruct struct {
 	CreateModuleFunc func(param CreateModuleParam)
 }
 
-func CreateAllModules(app *fiber.App) {
+func createModules(app *fiber.App, modules []CreateModuleConstruct) {
+	if len(modules) < 1 {
+		return
+	}
 	var wg sync.WaitGroup
 
-	allCreateModuleFuncs := []CreateModuleConstruct{
-		{
-			PrefixPath:       "/user",
-			CreateModuleFunc: CreateUserModule,
-		},
-		{
-			PrefixPath:       "/chat",
-			CreateModuleFunc: CreateChatModule,
-		},
-		{
-			PrefixPath:       "/auth",
-			CreateModuleFunc: CreateAuthenticationModule,
-		},
-	}
+	wg.Add(len(modules))
 
-	// increment the wait group counter
-	wg.Add(len(allCreateModuleFuncs))
-
-	for _, construct := range allCreateModuleFuncs {
+	for _, construct := range modules {
 		// launch each module setup in a go routine
 		go func(c CreateModuleConstruct) {
 			// defer the counter when the go routine is complete
@@ -58,40 +45,57 @@ func CreateAllModules(app *fiber.App) {
 	wg.Wait()
 }
 
+func createPublicModules(app *fiber.App) {
+	publicModules := []CreateModuleConstruct{
+		{
+			PrefixPath:       "/auth",
+			CreateModuleFunc: CreateAuthenticationModule,
+		},
+		{
+			PrefixPath:       "/user",
+			CreateModuleFunc: CreatePublicUserModule,
+		},
+	}
+	createModules(app, publicModules)
+}
+
+func createAuthModules(app *fiber.App) {
+	authModules := []CreateModuleConstruct{
+		{
+			PrefixPath:       "/chat",
+			CreateModuleFunc: CreateChatModule,
+		},
+		{
+			PrefixPath:       "/user",
+			CreateModuleFunc: CreateUserModule,
+		},
+	}
+	createModules(app, authModules)
+}
+
+func CreateAllModules(app *fiber.App) {
+	createPublicModules(app)
+
+	// JWT middleware
+	app.Use(jwtware.New(jwtware.Config{
+		SigningKey: jwtware.SigningKey{
+			Key: []byte(env.EnvData["JWT_SECRET"]),
+		},
+	}))
+	// all modules below here's gonna be need bearer token
+
+	createAuthModules(app)
+}
+
 func PathWithPrefix(prefix string, endpoint string) string {
 	return fmt.Sprint(prefix, endpoint)
 }
 
-func GenerateAccessToken(user models.UserParseFromDB) (string, error) {
-	jwtSecret := []byte(env.EnvData["JWT_SECRET"])
-	accessToken := jwt.New(jwt.SigningMethodEdDSA)
-	claims := accessToken.Claims.(jwt.MapClaims)
-	// 1 week
-	claims["exp"] = time.Now().Add(7 * 24 * time.Hour)
-	claims["username"] = user.Username
-	claims["id"] = user.Id
-	return accessToken.SignedString(jwtSecret)
-}
-
-func GenerateRefreshToken(accessToken string) (string, error) {
-	jwtSecret := []byte(env.EnvData["JWT_SECRET"])
-	refreshToken := jwt.New(jwt.SigningMethodEdDSA)
-	claims := refreshToken.Claims.(jwt.MapClaims)
-	// 1 week + 2 days
-	claims["exp"] = time.Now().Add(9 * 24 * time.Hour)
-	claims["accessToken"] = accessToken
-	return refreshToken.SignedString(jwtSecret)
-}
-
-func GenerateAuthTokens(user models.UserParseFromDB) (string, string, error) {
-	accessToken, accessTokenErr := GenerateAccessToken(user)
-	// FIX: idk why can't generate access token, must investigate into this
-	if accessTokenErr != nil {
-		return "", "", accessTokenErr
+func CurrentUser(c *fiber.Ctx) models.CurrentUser {
+	user := c.Locals("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	return models.CurrentUser{
+		Id:       claims["id"].(string),
+		Username: claims["username"].(string),
 	}
-	refreshToken, refreshTokenErr := GenerateRefreshToken(accessToken)
-	if refreshTokenErr != nil {
-		return accessToken, "", refreshTokenErr
-	}
-	return accessToken, refreshToken, nil
 }

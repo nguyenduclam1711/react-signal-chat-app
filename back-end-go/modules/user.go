@@ -1,45 +1,26 @@
 package modules
 
 import (
-	"encoding/json"
-
 	"github.com/gofiber/fiber/v2"
 	"github.com/nguyenduclam1711/react-signal-chat-app/models"
 	"github.com/nguyenduclam1711/react-signal-chat-app/repository"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 func CreateUserModule(param CreateModuleParam) {
-	param.App.Post(PathWithPrefix(param.PrefixPath, "/register"), func(c *fiber.Ctx) error {
-		requestBody := c.Body()
+	param.App.Get(PathWithPrefix(param.PrefixPath, "/me"), func(c *fiber.Ctx) error {
+		currentUser := CurrentUser(c)
+		// FIX: Why find by _id doesnt work but find by username work???
+		result := repository.UserRepository.GetOne(&bson.D{{
+			Key:   "_id",
+			Value: currentUser.Id,
+		}}, nil)
 
-		var registeredUserPayload models.RegisteredUserPayload
-		parseErr := json.Unmarshal(requestBody, &registeredUserPayload)
-		if parseErr != nil {
-			return parseErr
+		var userFromDb models.UserParseFromDB
+		decodeErr := result.Decode(&userFromDb)
+		if decodeErr != nil {
+			return decodeErr
 		}
-
-		// Create user credential
-		_, createUserCredentialErr := repository.UserCredentialRepository.InsertOne(registeredUserPayload)
-		if createUserCredentialErr != nil {
-			return createUserCredentialErr
-		}
-
-		// Create user
-		createdUser, createdUserErr := repository.UserRepository.InsertOne(models.UserDatabaseStruct{
-			Username: registeredUserPayload.Username,
-		})
-		if createdUserErr != nil {
-			return createdUserErr
-		}
-
-		// Return the user
-		responseJson := models.RegisteredUserResponse{}
-		responseJson.Username = registeredUserPayload.Username
-		responseJson.Id = models.ConvertObjectIdToString(createdUser.InsertedID)
-		encodeResponse, encodingErr := json.Marshal(responseJson)
-		if encodingErr != nil {
-			return encodingErr
-		}
-		return c.Send(encodeResponse)
+		return c.JSON(userFromDb)
 	})
 }

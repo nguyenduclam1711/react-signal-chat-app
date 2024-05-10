@@ -4,7 +4,10 @@ import (
 	"context"
 	"log"
 
+	"github.com/goccy/go-json"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/compress"
+	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/nguyenduclam1711/react-signal-chat-app/database"
 	"github.com/nguyenduclam1711/react-signal-chat-app/env"
 	"github.com/nguyenduclam1711/react-signal-chat-app/modules"
@@ -21,10 +24,21 @@ func main() {
 	// create all repositories
 	repository.CreateAllRepositories()
 
-	// create fiber app
-	app := fiber.New()
+	// create fiber app with custom json encoder and decoder
+	app := fiber.New(fiber.Config{
+		JSONEncoder: json.Marshal,
+		JSONDecoder: json.Unmarshal,
+	})
 
-	// craete all modules
+	// Initialize default config
+	app.Use(compress.New(compress.Config{
+		Level: compress.LevelDefault,
+	}))
+
+	// logger
+	app.Use(logger.New(logger.ConfigDefault))
+
+	// create all modules
 	modules.CreateAllModules(app)
 
 	// disconnect database here, the code is ugly I know
@@ -35,5 +49,5 @@ func main() {
 		database.MongoDatabase = nil
 	}()
 
-	log.Fatal(app.Listen(":3000"))
+	log.Fatal(app.Listen(":" + env.EnvData["PORT"]))
 }
